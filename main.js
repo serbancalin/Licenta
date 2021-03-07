@@ -70,59 +70,12 @@ class Player{
 }
 const player = new Player()
 
-//Cheese
-const cheeseArray = [];
-class Cheese{
-    constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.radius = 15;
-        this.distance = 0;
-    }
-    update(){
-        const dx = this.x - player.x;
-        const dy = this.y - player.y;
-        this.distance = Math.sqrt(dx * dx + dy * dy);
-    }
-    draw(){
-        ctx.fillStyle = 'yellow';
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.closePath();
-        ctx.stroke();
-    }
-}
-
-function createRandomCheese(){
-    const minNumberCheese = 1;
-    const maxNumberCheese = 4;
-    const howMany = Math.floor(Math.random()  * (maxNumberCheese - minNumberCheese + 1)) + minNumberCheese;
-    maxScore = howMany;
-    for(let i = 0; i < howMany; ++i){
-        cheeseArray.push(new Cheese())
-    }
-}
-
-function handleCheese(){
-    for(let i = 0; i < cheeseArray.length; ++i){
-        cheeseArray[i].update();
-        cheeseArray[i].draw();
-        if(cheeseArray[i].distance < cheeseArray[i].radius + player.radius){
-            cheeseArray.splice(i, 1);
-            score++;
-        }
-    }
-}
-
 //Animation
 function animate(){
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    handleCheese();
     player.update();
     player.draw();
     ctx.fillText(score + '/' + maxScore, 10, 50);
     requestAnimationFrame(animate);
 }
-createRandomCheese();
 animate();
