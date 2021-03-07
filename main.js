@@ -27,6 +27,7 @@ canvas.addEventListener('mousedown', function (event){
 canvas.addEventListener('mouseup', function (){
     mouse.click = false;
 })
+
 //Player
 class Player{
     constructor() {
@@ -115,14 +116,73 @@ function handleCheese(){
     }
 }
 
+//Walls
+const wallsArray = []
+class Wall{
+    constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.radius = 20;
+        this.distance = 0;
+    }
+    update(){
+        const dx = this.x - player.x;
+        const dy = this.y - player.y;
+        this.distance = Math.sqrt(dx * dx + dy * dy);
+    }
+    draw(){
+        ctx.fillStyle = 'brown';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.rect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+        ctx.fill();
+        ctx.closePath();
+        ctx.stroke();
+    }
+}
+
+
+function createRandomWalls(){
+    const minNumberWalls = 1;
+    const maxNumberWalls = 4;
+    const howMany = Math.floor(Math.random()  * (maxNumberWalls - minNumberWalls + 1)) + minNumberWalls;
+    for(let i = 0; i < howMany; ++i){
+        wallsArray.push(new Wall())
+    }
+}
+
+function handleWalls(){
+    for(let i = 0; i < wallsArray.length; ++i){
+        wallsArray[i].update();
+        wallsArray[i].draw();
+        if(wallsArray[i].distance < wallsArray[i].radius + player.radius){
+            let offset = wallsArray[i].radius + player.radius + 5;
+            if(player.x < wallsArray[i].x){
+                mouse.x = wallsArray[i].x - offset;
+            }
+            else{
+                mouse.x = wallsArray[i].x + offset;
+            }
+            if(player.y < wallsArray[i].y){
+                mouse.y = wallsArray[i].y - offset;
+            }
+            else{
+                mouse.y = wallsArray[i].y + offset;
+            }
+        }
+    }
+}
+
 //Animation
 function animate(){
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     handleCheese();
+    handleWalls();
     player.update();
     player.draw();
     ctx.fillText(score + '/' + maxScore, 10, 50);
     requestAnimationFrame(animate);
 }
 createRandomCheese();
+createRandomWalls();
 animate();
