@@ -28,8 +28,6 @@ canvas.addEventListener('mousedown', function (event){
 canvas.addEventListener('mouseup', function (){
     mouse.click = false;
 })
-<<<<<<< Updated upstream
-=======
 
 
 const playerRight = new Image();
@@ -40,7 +38,6 @@ const playerIdle = new Image();
 playerIdle.src = "./assets/mouseIdle.png";
 
 
->>>>>>> Stashed changes
 //Player
 class Player {
     constructor() {
@@ -148,8 +145,6 @@ function handleCheese(){
     }
 }
 
-<<<<<<< Updated upstream
-=======
 //Walls
 const wallsArray = []
 class Wall{
@@ -216,7 +211,6 @@ function handleBackground(){
 }
 
 
->>>>>>> Stashed changes
 //Animation
 function animate(){
     gameframe++;
@@ -229,13 +223,9 @@ function animate(){
     requestAnimationFrame(animate);
 }
 createRandomCheese();
-<<<<<<< Updated upstream
-animate();
-=======
 createRandomWalls();
 animate();
 
 window.addEventListener('resize', function(){
     canvasPositon = canvas.getBoundingClientRect();
 })
->>>>>>> Stashed changes
