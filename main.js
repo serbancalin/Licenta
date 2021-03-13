@@ -217,6 +217,7 @@ function animate(){
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     handleBackground();
     handleCheese();
+    handleWalls();
     player.update();
     player.draw();
     ctx.fillText(score + '/' + maxScore, 10, 50);
