@@ -11,7 +11,7 @@ body{
     align-items: center;
 }
 #main_canvas{
-    width: 800px;
-    height: 500px;
+    width: 1000px;
+    height: 650px;
     border: 4px solid black;
 }

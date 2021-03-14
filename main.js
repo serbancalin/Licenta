@@ -1,8 +1,8 @@
 //Canvas setup
 const canvas = document.getElementById('main_canvas');
 const ctx = canvas.getContext('2d');
-canvas.width = 800;
-canvas.height = 500;
+canvas.width = 1000;
+canvas.height = 650;
 
 let gameframe = 0;
 let gameOver = false;
@@ -29,7 +29,6 @@ canvas.addEventListener('mousedown', function (event){
 canvas.addEventListener('mouseup', function (){
     mouse.click = false;
 })
-
 
 //Player
 const playerRight = new Image();
@@ -129,20 +128,33 @@ class Cheese{
 }
 
 //Walls
-const wallsArray = []
 class Wall{
-    constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
+    constructor(x, y, player) {
+        this.x = x;
+        this.y = y;
+        this.player = player;
         this.radius = 20;
         this.distance = 0;
+        this.image = new Image()
+        if(Math.random() > 0.5){
+            this.image.src = "./assets/spilledDrink.png";
+            this.xcoordOffset = 60;
+            this.ycoordOffset = 20;
+            this.sizeOffset = 6;
+        } else {
+            this.image.src = "./assets/salt.png";
+            this.xcoordOffset = 25;
+            this.ycoordOffset = 20;
+            this.sizeOffset = 3.75;
+        }
     }
     update(){
-        const dx = this.x - player.x;
-        const dy = this.y - player.y;
+        const dx = this.x - this.player.x;
+        const dy = this.y - this.player.y;
         this.distance = Math.sqrt(dx * dx + dy * dy);
     }
-    draw(){
+
+    showHitbox(){
         ctx.fillStyle = 'brown';
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
@@ -151,40 +163,13 @@ class Wall{
         ctx.closePath();
         ctx.stroke();
     }
-}
 
-function createRandomWalls(){
-    const minNumberWalls = 1;
-    const maxNumberWalls = 4;
-    const howMany = Math.floor(Math.random()  * (maxNumberWalls - minNumberWalls + 1)) + minNumberWalls;
-    for(let i = 0; i < howMany; ++i){
-        wallsArray.push(new Wall())
+    draw(){
+        //this.showHitbox();
+        ctx.drawImage(this.image, this.x - this.radius - this.xcoordOffset, this.y - this.radius - this.ycoordOffset,
+            this.radius * this.sizeOffset, this.radius * this.sizeOffset);
     }
 }
-
-/*
-function handleWalls(){
-    for(let i = 0; i < wallsArray.length; ++i){
-        wallsArray[i].update();
-        wallsArray[i].draw();
-        if(wallsArray[i].distance < wallsArray[i].radius + player.radius){
-            let offset = wallsArray[i].radius + player.radius + 5;
-            if(player.x < wallsArray[i].x){
-                mouse.x = wallsArray[i].x - offset;
-            }
-            else{
-                mouse.x = wallsArray[i].x + offset;
-            }
-            if(player.y < wallsArray[i].y){
-                mouse.y = wallsArray[i].y - offset;
-            }
-            else{
-                mouse.y = wallsArray[i].y + offset;
-            }
-        }
-    }
-}
-*/
 
 //Background
 const background1 = new Image();
@@ -204,6 +189,7 @@ class Level{
         this.score = 0;
         this.maxScore = 0;
         this.cheeseArray = [];
+        this.wallsArray = []
         this.initializeCurrentLevel();
     }
 
@@ -240,14 +226,14 @@ class Level{
 
     handleCurrentLevel(){
         this.handleBackground();
-        this.handlePlayer();
-        this.handleScore();
         switch (this.currentLevel){
             case 1: this.handleLevel1(); break;
             case 2: this.handleLevel2(); break;
             //case 3: this.handleLevel3(); break;
             //case 4: this.handleLevel4(); break;
         }
+        this.handleScore();
+        this.handlePlayer();
     }
 
     run(){
@@ -257,6 +243,8 @@ class Level{
     /////////////////////////////////////////        Level 1         ////////////////////////////////////////////////
 
     initializeLevel1(){
+        mouse.x = canvas.width / 2;
+        mouse.y = canvas.height / 2;
         this.player = new Player(canvas.width / 2, canvas.height / 2);
         this.createRandomCheese();
     }
@@ -269,7 +257,7 @@ class Level{
         this.maxScore = Math.floor(Math.random()  * (maxNumberCheese - minNumberCheese + 1)) + minNumberCheese;
         for(let i = 1; i <= this.maxScore; ++i){
             let x = canvas.width / (this.maxScore + 1) * i + (Math.random() - 0.5) * offset;
-            let y = Math.random() * canvas.height;
+            let y = (Math.random() * (canvas.height - 50)) + 25;
             this.cheeseArray.push(new Cheese(x, y, this.player));
         }
     }
@@ -292,19 +280,57 @@ class Level{
     /////////////////////////////////////////        Level 2         ////////////////////////////////////////////////
 
     initializeLevel2(){
+        mouse.x = canvas.width / 2;
+        mouse.y = canvas.height / 2;
         this.player = new Player(canvas.width / 2, canvas.height / 2);
         this.createRandomCheese();
+        this.createRandomWalls();
+    }
+
+    createRandomWalls(){
+        const offset = 50;
+        const minNumberWalls = 5;
+        const maxNumberWalls = 10;
+        const howMany = Math.floor(Math.random()  * (maxNumberWalls - minNumberWalls + 1)) + minNumberWalls;
+        for(let i = 1; i <= howMany; ++i){
+            let x = canvas.width / (howMany + 1) * i + (Math.random() - 0.5) * offset;
+            let y = (Math.random() * (canvas.height - 50)) + 25;
+            this.wallsArray.push(new Wall(x, y, this.player))
+        }
+    }
+
+    handleWalls(){
+        for(let i = 0; i < this.wallsArray.length; ++i){
+            this.wallsArray[i].update();
+            this.wallsArray[i].draw();
+            if(this.wallsArray[i].distance < this.wallsArray[i].radius + this.player.radius){
+                let offset = this.wallsArray[i].radius + this.player.radius + 5;
+                if(this.player.x < this.wallsArray[i].x){
+                    mouse.x = this.wallsArray[i].x - offset;
+                }
+                else{
+                    mouse.x = this.wallsArray[i].x + offset;
+                }
+                if(this.player.y < this.wallsArray[i].y){
+                    mouse.y = this.wallsArray[i].y - offset;
+                }
+                else{
+                    mouse.y = this.wallsArray[i].y + offset;
+                }
+            }
+        }
     }
 
     handleLevel2(){
-        this.handleCheese()
+        this.handleCheese();
+        this.handleWalls();
     }
 }
 
 const level1 = new Level(1, background1);
 const level2 = new Level(2, background2);
 
-let currentLoaded = level1;
+let currentLoaded = level2;
 
 function levelManager() {
     if (currentLoaded.finished === true){
