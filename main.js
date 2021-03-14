@@ -54,12 +54,10 @@ class Player {
     update(){
         const dx = this.x - mouse.x;
         const dy = this.y - mouse.y;
-        if(this.x !== mouse.x){
-            this.x -= dx / this.speed;
-        }
-        if(this.y !== mouse.y){
-            this.y -= dy / this.speed;
-        }
+
+        this.x -= dx / this.speed;
+        this.y -= dy / this.speed;
+
         if (gameframe % 15 === 0) {
             this.frame++;
             this.frame %= 3;
@@ -207,9 +205,14 @@ class Cats{
         this.yStart = y;
         this.xFinish = xFinish;
         this.yFinish = yFinish;
+
+        this.counter = 0;
+        this.oldPlayerX = player.x;
+        this.oldPlayerY = player.y;
+        this.playerIsIdle = false;
     }
 
-    update1(){
+    patrol(){
         const offset = 5;
         const dx = this.x - this.xFinish;
         const dy = this.y - this.yFinish;
@@ -225,26 +228,62 @@ class Cats{
             this.yStart = yTmp;
 
         } else {
-            if (this.x !== this.xFinish) {
-                this.x -= dx / this.speed;
-            }
-            if (this.y !== this.yFinish) {
-                this.y -= dy / this.speed;
-            }
+            this.moveToLocation(dx, dy, this.speed);
         }
     }
 
-    update2(dx, dy){
-        if(this.x !== this.player.x){
-            this.x -= dx / this.speed;
-        }
-        if(this.y !== this.player.y){
-            this.y -= dy / this.speed;
-        }
+    moveToLocation(dx, dy, speed){
+        this.x -= dx / speed;
+        this.y -= dy / speed;
+        //console.log(dx, dy);
     }
 
-    update3() {
+    positionBetweenPlayerAndCheese(){
+        const offset = 5;
 
+        const xLocation = (this.player.x - this.xFinish) / offset + this.xFinish;
+        const yLocation = (this.player.y - this.yFinish) / offset + this.yFinish;
+        //console.log(xLocation, yLocation);
+
+        const dx = this.x - xLocation;
+        const dy = this.y - yLocation;
+
+        this.moveToLocation(dx, dy, this.speed + 10);
+    }
+
+    guardAndChase(dx, dy) {
+        //Get into position
+        if(this.playerIsIdle === false) {
+            this.positionBetweenPlayerAndCheese();
+        }
+
+        //Check if player is idle
+        const offset = 5;
+        const player_dx = this.oldPlayerX - this.player.x;
+        const player_dy = this.oldPlayerY - this.player.y;
+
+        if(Math.abs(player_dx) < offset && Math.abs(player_dy) < offset){
+            this.counter++;
+            //console.log(this.counter);
+            if(this.counter >= 15 * offset){    //If player is idle, move towards him
+                this.playerIsIdle = true;
+                this.moveToLocation(dx, dy, this.speed);
+            }
+        }else{
+            this.counter = 0;
+            this.playerIsIdle = false;
+        }
+        this.oldPlayerX = this.player.x;
+        this.oldPlayerY = this.player.y;
+
+        //See if player colected cheese
+        const dxPlayerCheese = this.player.x - this.xFinish;
+        const dyPlayerCheese = this.player.y - this.yFinish;
+
+        const dPlayerCheese = Math.sqrt(dxPlayerCheese * dxPlayerCheese + dyPlayerCheese * dyPlayerCheese);
+        if(dPlayerCheese < this.player.radius + this.radius){
+            this.type = 2;
+        }
     }
 
     update(){
@@ -252,9 +291,9 @@ class Cats{
         const dy = this.y - this.player.y;
         this.distance = Math.sqrt(dx * dx + dy * dy);
         switch (this.type){
-            case 1: this.update1(); break;          //Patrols
-            case 2: this.update2(dx, dy); break;    //Chases
-            case 3: this.update3(); break;          //Guards and chases
+            case 1: this.patrol(); break;                               //Patrols
+            case 2: this.moveToLocation(dx, dy, this.speed); break;     //Chases
+            case 3: this.guardAndChase(dx, dy); break;                  //Guards and chases
         }
         if (gameframe % 15 === 0) {
             this.frame++;
@@ -302,7 +341,7 @@ class Level{
             case 1: this.initializeLevel1(); break;
             case 2: this.initializeLevel2(); break;
             case 3: this.initializeLevel3(); break;
-            //case 4: this.initializeLevel4(); break;
+            case 4: this.initializeLevel4(); break;
         }
     }
 
@@ -353,7 +392,7 @@ class Level{
             case 1: this.handleLevel1(); break;
             case 2: this.handleLevel2(); break;
             case 3: this.handleLevel3(); break;
-            //case 4: this.handleLevel4(); break;
+            case 4: this.handleLevel4(); break;
         }
         this.handlePlayer();
     }
@@ -375,8 +414,10 @@ class Level{
     /////////////////////////////////////////        Level 1         ////////////////////////////////////////////////
 
     initializeLevel1(){
-        this.player = new Player(canvas.width / 2, canvas.height / 2);
-        this.createRandomCats(2, 3);
+        mouse.x = canvas.width / 2;
+        mouse.y = canvas.height / 2;
+        this.player = new Player(mouse.x, mouse.y);
+        this.createRandomCats(2, 3, 1);
         this.createRandomCheese(2, 4);
     }
 
@@ -403,14 +444,14 @@ class Level{
     }
 
     //Cats
-    createRandomCats(minNumberCats, maxNumberCats){
+    createRandomCats(minNumberCats, maxNumberCats, type){
         const howMany = Math.floor(Math.random()  * (maxNumberCats - minNumberCats + 1)) + minNumberCats;
         for(let i = 1; i <= howMany; ++i){
             let xStart = Math.random() * canvas.width;
             let yStart = Math.random() * canvas.height;
             let xFinish = Math.random() * canvas.width;
             let yFinish = Math.random() * canvas.height;
-            this.catsArray.push(new Cats(xStart, yStart, this.player,1 , xFinish, yFinish));
+            this.catsArray.push(new Cats(xStart, yStart, this.player,type , xFinish, yFinish));
         }
     }
 
@@ -420,6 +461,7 @@ class Level{
             this.catsArray[i].draw();
             if(this.catsArray[i].distance < this.catsArray[i].radius + this.player.radius && this.player.isInvincible === false){
                 this.failed = true;
+                //console.log("Collision " + this.catsArray[i].type + " " + i + " Distance " + this.catsArray[i].distance);
             }
         }
     }
@@ -502,6 +544,32 @@ class Level{
         }
     }
 
+    /////////////////////////////////////////        Level 4         ////////////////////////////////////////////////
+
+    initializeLevel4(){
+        mouse.x = canvas.width / 5 * 4;
+        mouse.y = canvas.height / 5;
+        this.player = new Player(mouse.x, mouse.y);
+
+        const cheese_x = canvas.width / 6;
+        const cheese_y = canvas.height / 6 * 5;
+        this.catsArray.push(new Cats(canvas.width / 5, canvas.height / 5 * 4, this.player, 3, cheese_x, cheese_y));
+        this.cheeseArray.push(new Cheese(cheese_x, cheese_y, this.player));
+        this.maxScore = 1;
+    }
+
+    handleLevel4(){
+        this.handleScore();
+        this.handleCats();
+        this.handleCheese();
+        if(this.scoreAchieved === true){
+            if(this.timesUp === false){
+                this.handleTime(10);
+            } else {
+                this.rollCredits();
+            }
+        }
+    }
 }
 
 const level1 = new Level(1, "./assets/kitchen1.jpg");
@@ -518,6 +586,10 @@ function levelManager() {
             case 2:
                 let level3 = new Level(3, "./assets/kitchen3.jpg");
                 currentLoaded = level3;
+                break;
+            case 3:
+                let level4 = new Level(4, "./assets/kitchen4.jpg");
+                currentLoaded = level4;
                 break;
             default:
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
