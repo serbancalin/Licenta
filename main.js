@@ -136,18 +136,36 @@ class Wall{
         this.radius = 20;
         this.distance = 0;
         this.image = new Image()
-        if(Math.random() > 0.5){
+        this.loadImage();
+
+    }
+
+    loadImage(){
+        const which = Math.random();
+        if(which <= 0.25){
             this.image.src = "./assets/spilledDrink.png";
             this.xcoordOffset = 60;
-            this.ycoordOffset = 20;
+            this.ycoordOffset = 25;
             this.sizeOffset = 6;
-        } else {
+        } else if (which <= 0.5) {
             this.image.src = "./assets/salt.png";
             this.xcoordOffset = 25;
             this.ycoordOffset = 20;
             this.sizeOffset = 3.75;
+        } else if (which <= 0.75){
+            this.image.src = "./assets/brokenCup.png";
+            this.xcoordOffset = 25;
+            this.ycoordOffset = 40;
+            this.sizeOffset = 4.5;
+        } else {
+            this.image.src = "./assets/brokenPlate.png";
+            this.xcoordOffset = 30;
+            this.ycoordOffset = 20;
+            this.sizeOffset = 4.5;
         }
+
     }
+
     update(){
         const dx = this.x - this.player.x;
         const dy = this.y - this.player.y;
@@ -211,7 +229,7 @@ class Level{
     handleScore(){
         ctx.fillText(this.score + '/' + this.maxScore, 10, 50);
         if (this.score === this.maxScore){
-            ctx.fillText("Congratulations!", canvas.width / 4, canvas.height / 2);
+            ctx.fillText("Congratulations!", canvas.width / 10 *3, canvas.height / 2);
             if(gameframe % 500 === 0){
                 this.finished = true;
             }
@@ -330,7 +348,7 @@ class Level{
 const level1 = new Level(1, background1);
 const level2 = new Level(2, background2);
 
-let currentLoaded = level2;
+let currentLoaded = level1;
 
 function levelManager() {
     if (currentLoaded.finished === true){
@@ -340,7 +358,7 @@ function levelManager() {
                 break;
             default:
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillText("GAME OVER", canvas.width / 10 * 3, canvas.height / 2);
+                ctx.fillText("GAME OVER", canvas.width / 6 * 2, canvas.height / 2);
                 gameOver = true;
                 break;
         }
