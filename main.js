@@ -4,13 +4,8 @@ const ctx = canvas.getContext('2d');
 canvas.width = 800;
 canvas.height = 500;
 
-<<<<<<< Updated upstream
-let score = 0;
-let maxScore = 0;
-=======
 let gameframe = 0;
 let gameOver = false;
->>>>>>> Stashed changes
 ctx.font = '50px Georgia'
 
 //Mouse controls
@@ -34,13 +29,6 @@ canvas.addEventListener('mousedown', function (event){
 canvas.addEventListener('mouseup', function (){
     mouse.click = false;
 })
-<<<<<<< Updated upstream
-//Player
-class Player{
-    constructor() {
-        this.x = canvas.width / 2;
-        this.y = canvas.height / 2;
-=======
 
 
 //Player
@@ -55,11 +43,7 @@ class Player {
     constructor(x, y) {
         this.x = x;
         this.y = y;
->>>>>>> Stashed changes
         this.radius = 20;
-        this.angle = 0;
-        this.frameX = 0;
-        this.frameY = 0;
         this.frame = 0;
         this.spriteHeight = 0;
         this.spriteWidth = 0;
@@ -77,10 +61,6 @@ class Player {
         }
     }
 
-<<<<<<< Updated upstream
-    draw(){
-        if(mouse.click){
-=======
     showHitbox(){
         ctx.fillStyle = 'gray';
         ctx.beginPath();
@@ -91,21 +71,12 @@ class Player {
 
     draw() {
         if (mouse.click) {
->>>>>>> Stashed changes
             ctx.lineWidth = 0.5;
             ctx.beginPath();
             ctx.moveTo(this.x, this.y);
             ctx.lineTo(mouse.x, mouse.y);
             ctx.stroke();
         }
-<<<<<<< Updated upstream
-        ctx.fillStyle = 'gray';
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.closePath();
-=======
-
         //this.showHitbox();
 
         if (this.x < mouse.x - this.radius) {
@@ -118,7 +89,6 @@ class Player {
             ctx.drawImage(playerIdle, this.frame * this.spriteWidth, 0, this.spriteWidth, this.spriteHeight,
                 this.x - this.spriteWidth / 2, this.y - this.spriteHeight / 2 - 10, this.spriteWidth, this.spriteHeight);
         }
->>>>>>> Stashed changes
     }
 }
 
@@ -136,12 +106,8 @@ class Cheese{
         const dy = this.y - this.player.y;
         this.distance = Math.sqrt(dx * dx + dy * dy);
     }
-<<<<<<< Updated upstream
-    draw(){
-=======
 
     showHitbox(){
->>>>>>> Stashed changes
         ctx.fillStyle = 'yellow';
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
@@ -156,8 +122,6 @@ class Cheese{
     }
 }
 
-<<<<<<< Updated upstream
-=======
 //Walls
 const wallsArray = []
 class Wall{
@@ -351,23 +315,13 @@ function levelManager() {
     }
 }
 
->>>>>>> Stashed changes
 //Animation
 function animate(){
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-<<<<<<< Updated upstream
-    handleCheese();
-    player.update();
-    player.draw();
-    ctx.fillText(score + '/' + maxScore, 10, 50);
-    requestAnimationFrame(animate);
-}
-createRandomCheese();
-animate();
-=======
     currentLoaded.run();
     levelManager();
     if(!gameOver) requestAnimationFrame(animate);
+    requestAnimationFrame(animate);
 }
+
 animate();
->>>>>>> Stashed changes
