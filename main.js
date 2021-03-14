@@ -234,11 +234,7 @@ class Cats{
         }
     }
 
-    update2(){
-
-    }
-
-    update3(dx, dy){
+    update2(dx, dy){
         if(this.x !== this.player.x){
             this.x -= dx / this.speed;
         }
@@ -247,14 +243,18 @@ class Cats{
         }
     }
 
+    update3() {
+
+    }
+
     update(){
         const dx = this.x - this.player.x;
         const dy = this.y - this.player.y;
         this.distance = Math.sqrt(dx * dx + dy * dy);
         switch (this.type){
-            case 1: this.update1(); break;  //Patrols
-            case 2: this.update2(); break;  //Guards and chases
-            case 3: this.update3(dx, dy); break;  //Chases
+            case 1: this.update1(); break;          //Patrols
+            case 2: this.update2(dx, dy); break;    //Chases
+            case 3: this.update3(); break;          //Guards and chases
         }
         if (gameframe % 15 === 0) {
             this.frame++;
@@ -490,7 +490,7 @@ class Level{
         mouse.x = canvas.width / 5 * 4;
         mouse.y = canvas.height / 5 * 4;
         this.player = new Player(mouse.x, mouse.y);
-        this.catsArray.push(new Cats(canvas.width / 5, canvas.height / 5, this.player, 3));
+        this.catsArray.push(new Cats(canvas.width / 5, canvas.height / 5, this.player, 2));
     }
 
     handleLevel3(){
