@@ -30,14 +30,6 @@ canvas.addEventListener('mouseup', function (){
     mouse.click = false;
 })
 
-//Player
-const playerRight = new Image();
-playerRight.src = "./assets/mouseR.png";
-const playerLeft = new Image();
-playerLeft.src = "./assets/mouseL.png";
-const playerIdle = new Image();
-playerIdle.src = "./assets/mouseIdle.png";
-
 class Player {
     constructor(x, y) {
         this.x = x;
@@ -47,6 +39,14 @@ class Player {
         this.frame = 0;
         this.spriteHeight = 155;
         this.spriteWidth = 150;
+
+
+        this.playerRight = new Image();
+        this.playerRight.src = "./assets/mouseR.png";
+        this.playerLeft = new Image();
+        this.playerLeft.src = "./assets/mouseL.png";
+        this.playerIdle = new Image();
+        this.playerIdle.src = "./assets/mouseIdle.png";
 
         this.isInvincible = false;
     }
@@ -85,19 +85,18 @@ class Player {
         //this.showHitbox();
 
         if (this.x < mouse.x - this.radius) {
-            ctx.drawImage(playerRight, this.frame * this.spriteWidth, 0, this.spriteWidth, this.spriteHeight,
+            ctx.drawImage(this.playerRight, this.frame * this.spriteWidth, 0, this.spriteWidth, this.spriteHeight,
                 this.x - this.spriteWidth / 2, this.y - this.spriteHeight / 2 - 10, this.spriteWidth - 10, this.spriteHeight);
         } else if (this.x > mouse.x + this.radius){
-            ctx.drawImage(playerLeft, this.frame * this.spriteWidth, 0, this.spriteWidth, this.spriteHeight,
+            ctx.drawImage(this.playerLeft, this.frame * this.spriteWidth, 0, this.spriteWidth, this.spriteHeight,
                 this.x - this.spriteWidth / 2, this.y - this.spriteHeight / 2 - 10, this.spriteWidth - 10, this.spriteHeight);
         } else {
-            ctx.drawImage(playerIdle, this.frame * this.spriteWidth, 0, this.spriteWidth, this.spriteHeight,
+            ctx.drawImage(this.playerIdle, this.frame * this.spriteWidth, 0, this.spriteWidth, this.spriteHeight,
                 this.x - this.spriteWidth / 2, this.y - this.spriteHeight / 2 - 10, this.spriteWidth, this.spriteHeight);
         }
     }
 }
 
-//Cheese
 class Cheese{
     constructor(x, y, player) {
         this.x = x;
@@ -129,7 +128,6 @@ class Cheese{
     }
 }
 
-//Walls
 class Wall{
     constructor(x, y, player) {
         this.x = x;
@@ -191,7 +189,6 @@ class Wall{
     }
 }
 
-//Cat
 class Cats{
     constructor(x, y, player = null, type, xFinish = 0, yFinish = 0) {
         this.x = x;
@@ -279,7 +276,6 @@ class Cats{
 
 }
 
-//Level
 class Level{
     constructor(current_level, background) {
         this.finished = false;
@@ -440,7 +436,9 @@ class Level{
     /////////////////////////////////////////        Level 2         ////////////////////////////////////////////////
 
     initializeLevel2(){
-        this.player = new Player(canvas.width / 2, canvas.height / 2);
+        mouse.x = canvas.width / 2;
+        mouse.y = canvas.height / 2;
+        this.player = new Player(mouse.x, mouse.y);
         this.createRandomCheese(2, 4);
         this.createRandomWalls(5, 7);
     }
