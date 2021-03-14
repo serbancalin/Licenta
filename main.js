@@ -45,8 +45,8 @@ class Player {
         this.y = y;
         this.radius = 20;
         this.frame = 0;
-        this.spriteHeight = 0;
-        this.spriteWidth = 0;
+        this.spriteHeight = 155;
+        this.spriteWidth = 150;
     }
 
     update(){
@@ -58,6 +58,10 @@ class Player {
         }
         if(this.y !== mouse.y){
             this.y -= dy / speed;
+        }
+        if (gameframe % 15 === 0) {
+            this.frame++;
+            this.frame %= 3;
         }
     }
 
@@ -100,6 +104,8 @@ class Cheese{
         this.player = player;
         this.radius = 15;
         this.distance = 0;
+        this.image = new Image()
+        this.image.src = Math.random() > 0.5 ? "./assets/cheese1.png" : "./assets/cheese2.png";
     }
     update(){
         const dx = this.x - this.player.x;
