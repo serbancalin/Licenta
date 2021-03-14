@@ -6,7 +6,7 @@ canvas.height = 650;
 
 let gameframe = 0;
 let gameOver = false;
-ctx.font = '50px Georgia'
+ctx.font = '50px Georgia';
 
 //Mouse controls
 let canvasPositon = canvas.getBoundingClientRect();
@@ -43,20 +43,22 @@ class Player {
         this.x = x;
         this.y = y;
         this.radius = 20;
+        this.speed = 20;   //lower is faster
         this.frame = 0;
         this.spriteHeight = 155;
         this.spriteWidth = 150;
+
+        this.isInvincible = false;
     }
 
     update(){
-        const speed = 20;   //lower is faster
         const dx = this.x - mouse.x;
         const dy = this.y - mouse.y;
         if(this.x !== mouse.x){
-            this.x -= dx / speed;
+            this.x -= dx / this.speed;
         }
         if(this.y !== mouse.y){
-            this.y -= dy / speed;
+            this.y -= dy / this.speed;
         }
         if (gameframe % 15 === 0) {
             this.frame++;
@@ -65,7 +67,7 @@ class Player {
     }
 
     showHitbox(){
-        ctx.fillStyle = 'gray';
+        ctx.fillStyle = 'grey';
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
@@ -189,13 +191,93 @@ class Wall{
     }
 }
 
-//Background
-const background1 = new Image();
-background1.src = "./assets/kitchen1.jpg";
-const background2 = new Image();
-background2.src = "./assets/kitchen2.jpg";
-const background3 = new Image();
-background3.src = "./assets/kitchen3.jpg";
+//Cat
+class Cats{
+    constructor(x, y, player = null, type, xFinish = 0, yFinish = 0) {
+        this.x = x;
+        this.y = y;
+        this.player = player;
+        this.type = type;
+        this.radius = 30;
+        this.speed = 35;   //lower is faster
+        this.distance = 0;
+
+        this.frame = 0;
+        this.spriteHeight = 0;
+        this.spriteWidth = 0;
+
+        this.xStart = x;
+        this.yStart = y;
+        this.xFinish = xFinish;
+        this.yFinish = yFinish;
+    }
+
+    update1(){
+        const offset = 5;
+        const dx = this.x - this.xFinish;
+        const dy = this.y - this.yFinish;
+        //console.log(dx, dy);
+
+        if(Math.abs(dx) < offset && Math.abs(dy) < offset){
+            const xTmp = this.xFinish   //Swap the x coordinates
+            this.xFinish = this.xStart;
+            this.xStart = xTmp;
+
+            const yTmp = this.yFinish; //Swap the y coordinates
+            this.yFinish = this.yStart;
+            this.yStart = yTmp;
+
+        } else {
+            if (this.x !== this.xFinish) {
+                this.x -= dx / this.speed;
+            }
+            if (this.y !== this.yFinish) {
+                this.y -= dy / this.speed;
+            }
+        }
+    }
+
+    update2(){
+
+    }
+
+    update3(dx, dy){
+        if(this.x !== this.player.x){
+            this.x -= dx / this.speed;
+        }
+        if(this.y !== this.player.y){
+            this.y -= dy / this.speed;
+        }
+    }
+
+    update(){
+        const dx = this.x - this.player.x;
+        const dy = this.y - this.player.y;
+        this.distance = Math.sqrt(dx * dx + dy * dy);
+        switch (this.type){
+            case 1: this.update1(); break;  //Patrols
+            case 2: this.update2(); break;  //Guards and chases
+            case 3: this.update3(dx, dy); break;  //Chases
+        }
+        if (gameframe % 15 === 0) {
+            this.frame++;
+            this.frame %= 3;
+        }
+    }
+
+    showHitbox(){
+        ctx.fillStyle = 'red';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    draw() {
+        this.showHitbox();
+    }
+
+}
 
 //Level
 class Level{
@@ -203,11 +285,19 @@ class Level{
         this.finished = false;
         this.failed = false;
         this.currentLevel = current_level;
-        this.background = background;
+        this.background = new Image();
+        this.background.src = background;
+
         this.score = 0;
-        this.maxScore = 0;
+        this.maxScore = -1;
+        this.scoreAchieved = false;
+
+        this.toWait = -1;
+        this.timesUp = false;
+
         this.cheeseArray = [];
-        this.wallsArray = []
+        this.wallsArray = [];
+        this.catsArray = [];
         this.initializeCurrentLevel();
     }
 
@@ -215,7 +305,7 @@ class Level{
         switch (this.currentLevel){
             case 1: this.initializeLevel1(); break;
             case 2: this.initializeLevel2(); break;
-            //case 3: this.initializeLevel3(); break;
+            case 3: this.initializeLevel3(); break;
             //case 4: this.initializeLevel4(); break;
         }
     }
@@ -227,12 +317,31 @@ class Level{
 
     //Score
     handleScore(){
+        ctx.fillStyle = 'black';
         ctx.fillText(this.score + '/' + this.maxScore, 10, 50);
         if (this.score === this.maxScore){
-            ctx.fillText("Congratulations!", canvas.width / 10 *3, canvas.height / 2);
-            if(gameframe % 500 === 0){
-                this.finished = true;
-            }
+            this.scoreAchieved = true;
+        }
+    }
+
+    wait(seconds){
+        if(this.toWait === -1){
+            this.toWait = gameframe;
+        }
+        const time = seconds - (gameframe - this.toWait) / 60;
+        if(time <= 0){
+            this.toWait = -1;
+        }
+        return time;
+    }
+
+    //Time
+    handleTime(howManySeconds){
+        const timeLeft = this.wait(howManySeconds);
+        ctx.fillStyle = 'black';
+        ctx.fillText(timeLeft.toFixed(1).toString(), canvas.width - 100, 50);
+        if(timeLeft <= 0){
+            this.timesUp = true;
         }
     }
 
@@ -247,11 +356,20 @@ class Level{
         switch (this.currentLevel){
             case 1: this.handleLevel1(); break;
             case 2: this.handleLevel2(); break;
-            //case 3: this.handleLevel3(); break;
+            case 3: this.handleLevel3(); break;
             //case 4: this.handleLevel4(); break;
         }
-        this.handleScore();
         this.handlePlayer();
+    }
+
+    rollCredits(){
+        this.player.isInvincible = true;
+        ctx.fillStyle = 'black';
+        ctx.fillText("Congratulations!", canvas.width / 10 * 3, canvas.height / 2);
+        const timeLeft = this.wait(3);
+        if(timeLeft === 0) {
+            this.finished = true;
+        }
     }
 
     run(){
@@ -261,17 +379,14 @@ class Level{
     /////////////////////////////////////////        Level 1         ////////////////////////////////////////////////
 
     initializeLevel1(){
-        mouse.x = canvas.width / 2;
-        mouse.y = canvas.height / 2;
         this.player = new Player(canvas.width / 2, canvas.height / 2);
-        this.createRandomCheese();
+        this.createRandomCats(2, 3);
+        this.createRandomCheese(2, 4);
     }
 
     //Cheese
-    createRandomCheese(){
+    createRandomCheese(minNumberCheese, maxNumberCheese){
         const offset = 50;
-        const minNumberCheese = 2;
-        const maxNumberCheese = 4;
         this.maxScore = Math.floor(Math.random()  * (maxNumberCheese - minNumberCheese + 1)) + minNumberCheese;
         for(let i = 1; i <= this.maxScore; ++i){
             let x = canvas.width / (this.maxScore + 1) * i + (Math.random() - 0.5) * offset;
@@ -291,24 +406,47 @@ class Level{
         }
     }
 
+    //Cats
+    createRandomCats(minNumberCats, maxNumberCats){
+        const howMany = Math.floor(Math.random()  * (maxNumberCats - minNumberCats + 1)) + minNumberCats;
+        for(let i = 1; i <= howMany; ++i){
+            let xStart = Math.random() * canvas.width;
+            let yStart = Math.random() * canvas.height;
+            let xFinish = Math.random() * canvas.width;
+            let yFinish = Math.random() * canvas.height;
+            this.catsArray.push(new Cats(xStart, yStart, this.player,1 , xFinish, yFinish));
+        }
+    }
+
+    handleCats(){
+        for(let i = 0; i < this.catsArray.length; ++i) {
+            this.catsArray[i].update();
+            this.catsArray[i].draw();
+            if(this.catsArray[i].distance < this.catsArray[i].radius + this.player.radius && this.player.isInvincible === false){
+                this.failed = true;
+            }
+        }
+    }
+
     handleLevel1(){
-        this.handleCheese()
+        this.handleCheese();
+        this.handleCats();
+        this.handleScore();
+        if(this.scoreAchieved === true){
+           this.rollCredits();
+        }
     }
 
     /////////////////////////////////////////        Level 2         ////////////////////////////////////////////////
 
     initializeLevel2(){
-        mouse.x = canvas.width / 2;
-        mouse.y = canvas.height / 2;
         this.player = new Player(canvas.width / 2, canvas.height / 2);
-        this.createRandomCheese();
-        this.createRandomWalls();
+        this.createRandomCheese(2, 4);
+        this.createRandomWalls(5, 7);
     }
 
-    createRandomWalls(){
+    createRandomWalls(minNumberWalls, maxNumberWalls){
         const offset = 50;
-        const minNumberWalls = 5;
-        const maxNumberWalls = 10;
         const howMany = Math.floor(Math.random()  * (maxNumberWalls - minNumberWalls + 1)) + minNumberWalls;
         for(let i = 1; i <= howMany; ++i){
             let x = canvas.width / (howMany + 1) * i + (Math.random() - 0.5) * offset;
@@ -342,11 +480,33 @@ class Level{
     handleLevel2(){
         this.handleCheese();
         this.handleWalls();
+        this.handleScore();
+        if(this.scoreAchieved === true){
+            this.rollCredits();
+        }
     }
+
+    /////////////////////////////////////////        Level 3         ////////////////////////////////////////////////
+
+    initializeLevel3(){
+        mouse.x = canvas.width / 5 * 4;
+        mouse.y = canvas.height / 5 * 4;
+        this.player = new Player(mouse.x, mouse.y);
+        this.catsArray.push(new Cats(canvas.width / 5, canvas.height / 5, this.player, 3));
+    }
+
+    handleLevel3(){
+        this.handleCats();
+        if(this.timesUp === false){
+            this.handleTime(10);
+        } else {
+            this.rollCredits();
+        }
+    }
+
 }
 
-const level1 = new Level(1, background1);
-const level2 = new Level(2, background2);
+const level1 = new Level(1, "./assets/kitchen1.jpg");
 
 let currentLoaded = level1;
 
@@ -354,14 +514,26 @@ function levelManager() {
     if (currentLoaded.finished === true){
         switch (currentLoaded.currentLevel){
             case 1:
+                let level2 = new Level(2, "./assets/kitchen2.jpg");
                 currentLoaded = level2;
+                break;
+            case 2:
+                let level3 = new Level(3, "./assets/kitchen3.jpg");
+                currentLoaded = level3;
                 break;
             default:
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillText("GAME OVER", canvas.width / 6 * 2, canvas.height / 2);
+                ctx.fillStyle = 'steelblue';
+                ctx.fillText("YOU WIN", canvas.width / 8 * 3, canvas.height / 2);
                 gameOver = true;
                 break;
         }
+    }
+    if (currentLoaded.failed === true) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'red';
+        ctx.fillText("GAME OVER", canvas.width / 3, canvas.height / 2);
+        gameOver = true;
     }
 }
 
