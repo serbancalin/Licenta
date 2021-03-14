@@ -323,11 +323,11 @@ function levelManager() {
 
 //Animation
 function animate(){
+    gameframe++;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     currentLoaded.run();
     levelManager();
     if(!gameOver) requestAnimationFrame(animate);
-    requestAnimationFrame(animate);
 }
 
 animate();
