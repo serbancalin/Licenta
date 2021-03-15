@@ -188,7 +188,7 @@ class Wall{
 }
 
 class Cats{
-    constructor(x, y, player = null, type, xFinish = 0, yFinish = 0) {
+    constructor(x, y, player = null, type, xFinish = 0, yFinish = 0, objToProtectRadius = 0) {
         this.x = x;
         this.y = y;
         this.player = player;
@@ -210,6 +210,7 @@ class Cats{
         this.oldPlayerX = player.x;
         this.oldPlayerY = player.y;
         this.playerIsIdle = false;
+        this.objToProtectRadius = objToProtectRadius;
     }
 
     patrol(){
@@ -248,7 +249,7 @@ class Cats{
         const dx = this.x - xLocation;
         const dy = this.y - yLocation;
 
-        this.moveToLocation(dx, dy, this.speed + 10);
+        this.moveToLocation(dx, dy, this.speed - 5);
     }
 
     guardAndChase(dx, dy) {
@@ -281,7 +282,7 @@ class Cats{
         const dyPlayerCheese = this.player.y - this.yFinish;
 
         const dPlayerCheese = Math.sqrt(dxPlayerCheese * dxPlayerCheese + dyPlayerCheese * dyPlayerCheese);
-        if(dPlayerCheese < this.player.radius + this.radius){
+        if(dPlayerCheese < this.player.radius + this.objToProtectRadius){
             this.type = 2;
         }
     }
@@ -451,7 +452,7 @@ class Level{
             let yStart = Math.random() * canvas.height;
             let xFinish = Math.random() * canvas.width;
             let yFinish = Math.random() * canvas.height;
-            this.catsArray.push(new Cats(xStart, yStart, this.player,type , xFinish, yFinish));
+            this.catsArray.push(new Cats(xStart, yStart, this.player, type, xFinish, yFinish));
         }
     }
 
@@ -553,8 +554,8 @@ class Level{
 
         const cheese_x = canvas.width / 6;
         const cheese_y = canvas.height / 6 * 5;
-        this.catsArray.push(new Cats(canvas.width / 5, canvas.height / 5 * 4, this.player, 3, cheese_x, cheese_y));
         this.cheeseArray.push(new Cheese(cheese_x, cheese_y, this.player));
+        this.catsArray.push(new Cats(canvas.width / 5, canvas.height / 5 * 4, this.player, 3, cheese_x, cheese_y, this.cheeseArray[0].radius));
         this.maxScore = 1;
     }
 
@@ -572,13 +573,18 @@ class Level{
     }
 }
 
-const level1 = new Level(1, "./assets/kitchen1.jpg");
-
-let currentLoaded = level1;
+let currentLoaded = new Level(0, "./assets/cheese1.png");
+currentLoaded.finished = true;
+let checkpoint = 0;
 
 function levelManager() {
     if (currentLoaded.finished === true){
+        checkpoint = currentLoaded.currentLevel;
         switch (currentLoaded.currentLevel){
+            case 0:
+                let level1 = new Level(1, "./assets/kitchen1.jpg");
+                currentLoaded = level1;
+                break;
             case 1:
                 let level2 = new Level(2, "./assets/kitchen2.jpg");
                 currentLoaded = level2;
@@ -592,7 +598,8 @@ function levelManager() {
                 currentLoaded = level4;
                 break;
             default:
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = 'steelblue';
                 ctx.fillText("YOU WIN", canvas.width / 8 * 3, canvas.height / 2);
                 gameOver = true;
@@ -600,7 +607,8 @@ function levelManager() {
         }
     }
     if (currentLoaded.failed === true) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = 'red';
         ctx.fillText("GAME OVER", canvas.width / 3, canvas.height / 2);
         gameOver = true;
@@ -611,9 +619,14 @@ function levelManager() {
 function animate(){
     gameframe++;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    currentLoaded.run();
     levelManager();
-    if(!gameOver) requestAnimationFrame(animate);
+    if(!gameOver) currentLoaded.run();
+    requestAnimationFrame(animate);
+    if(gameOver && mouse.click){
+        gameOver = false;
+        currentLoaded.currentLevel = checkpoint;
+        currentLoaded.finished = true;
+    }
 }
 
 animate();
