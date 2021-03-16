@@ -48,7 +48,7 @@ class Player {
         this.playerIdle = new Image();
         this.playerIdle.src = "./assets/mouseIdle.png";
 
-        this.isInvincible = false;
+        this.isInvincible = true;
     }
 
     update(){
@@ -188,66 +188,69 @@ class Wall{
 }
 
 class Cats{
-    constructor(x, y, player = null, type, xFinish = 0, yFinish = 0, objToProtectRadius = 0) {
+    constructor(x, y, player = null, type, xDestination = 0, yDestination = 0, objToProtectRadius = 0) {
         this.x = x;
         this.y = y;
         this.player = player;
         this.type = type;
         this.radius = 30;
         this.speed = 35;   //lower is faster
-        this.distance = 0;
+        this.distanceToPlayer = 0;
+        this.distanceToDestination = 0;
 
         this.frame = 0;
-        this.spriteHeight = 0;
-        this.spriteWidth = 0;
+        this.spriteWidth = 542;
+        this.spriteHeight = 473;
 
         this.xStart = x;
         this.yStart = y;
-        this.xFinish = xFinish;
-        this.yFinish = yFinish;
+        this.xDestination = xDestination;
+        this.yDestination = yDestination;
 
         this.counter = 0;
         this.oldPlayerX = player.x;
         this.oldPlayerY = player.y;
         this.playerIsIdle = false;
         this.objToProtectRadius = objToProtectRadius;
+
+        this.catRight = new Image();
+        this.catRight.src = "./assets/catRight.png";
+        this.catLeft = new Image();
+        this.catLeft.src = "./assets/catLeft.png";
+        this.catIdle = new Image();
+        this.catIdle.src = "./assets/catIdle.png";
     }
 
-    patrol(){
-        const offset = 5;
-        const dx = this.x - this.xFinish;
-        const dy = this.y - this.yFinish;
-        //console.log(dx, dy);
-
-        if(Math.abs(dx) < offset && Math.abs(dy) < offset){
-            const xTmp = this.xFinish   //Swap the x coordinates
-            this.xFinish = this.xStart;
-            this.xStart = xTmp;
-
-            const yTmp = this.yFinish; //Swap the y coordinates
-            this.yFinish = this.yStart;
-            this.yStart = yTmp;
-
-        } else {
-            this.moveToLocation(dx, dy, this.speed);
-        }
-    }
-
-    moveToLocation(dx, dy, speed){
+    moveToLocation(dx, dy, speed = this.speed){
         this.x -= dx / speed;
         this.y -= dy / speed;
         //console.log(dx, dy);
     }
 
+    patrol(dx, dy){
+        const offset = this.radius / 2;
+        if(this.distanceToDestination < offset){
+            const xTmp = this.xDestination   //Swap the x coordinates
+            this.xDestination = this.xStart;
+            this.xStart = xTmp;
+
+            const yTmp = this.yDestination; //Swap the y coordinates
+            this.yDestination = this.yStart;
+            this.yStart = yTmp;
+        } else {
+            this.moveToLocation(dx, dy, this.speed);
+        }
+    }
+
     positionBetweenPlayerAndCheese(){
         const offset = 5;
 
-        const xLocation = (this.player.x - this.xFinish) / offset + this.xFinish;
-        const yLocation = (this.player.y - this.yFinish) / offset + this.yFinish;
+        const tmp_x = (this.player.x - this.xDestination) / offset + this.xDestination;
+        const tmp_y = (this.player.y - this.yDestination) / offset + this.yDestination;
         //console.log(xLocation, yLocation);
 
-        const dx = this.x - xLocation;
-        const dy = this.y - yLocation;
+        const dx = this.x - tmp_x;
+        const dy = this.y - tmp_y;
 
         this.moveToLocation(dx, dy, this.speed - 5);
     }
@@ -265,10 +268,10 @@ class Cats{
 
         if(Math.abs(player_dx) < offset && Math.abs(player_dy) < offset){
             this.counter++;
-            //console.log(this.counter);
+            console.log(this.counter);
             if(this.counter >= 15 * offset){    //If player is idle, move towards him
                 this.playerIsIdle = true;
-                this.moveToLocation(dx, dy, this.speed);
+                this.moveToLocation(dx, dy);
             }
         }else{
             this.counter = 0;
@@ -278,8 +281,8 @@ class Cats{
         this.oldPlayerY = this.player.y;
 
         //See if player colected cheese
-        const dxPlayerCheese = this.player.x - this.xFinish;
-        const dyPlayerCheese = this.player.y - this.yFinish;
+        const dxPlayerCheese = this.player.x - this.xDestination;
+        const dyPlayerCheese = this.player.y - this.yDestination;
 
         const dPlayerCheese = Math.sqrt(dxPlayerCheese * dxPlayerCheese + dyPlayerCheese * dyPlayerCheese);
         if(dPlayerCheese < this.player.radius + this.objToProtectRadius){
@@ -287,18 +290,45 @@ class Cats{
         }
     }
 
-    update(){
-        const dx = this.x - this.player.x;
-        const dy = this.y - this.player.y;
-        this.distance = Math.sqrt(dx * dx + dy * dy);
-        switch (this.type){
-            case 1: this.patrol(); break;                               //Patrols
-            case 2: this.moveToLocation(dx, dy, this.speed); break;     //Chases
-            case 3: this.guardAndChase(dx, dy); break;                  //Guards and chases
+    interceptAndChase(dx, dy, dpx, dpy){
+        let offset = this.radius;
+        if(this.distanceToDestination < this.distanceToPlayer + offset){
+            this.moveToLocation(dx, dy);
+            this.xDestination = mouse.x;
+            this.yDestination = mouse.y;
+            console.log("Chasing destination");
+        } else {
+            this.moveToLocation(dpx, dpy);
+            this.xDestination = this.player.x;
+            this.yDestination = this.player.y;
+            console.log("Chasing player");
         }
-        if (gameframe % 15 === 0) {
+
+    }
+
+    update(){
+        const dpx = this.x - this.player.x;
+        const dpy = this.y - this.player.y;
+        this.distanceToPlayer = Math.sqrt(dpx * dpx + dpy * dpy);
+
+        const dx = this.x - this.xDestination;
+        const dy = this.y - this.yDestination;
+        this.distanceToDestination = Math.sqrt(dx * dx + dy * dy);
+
+        switch (this.type){
+            case 1:                                         //Patrols
+                this.patrol(dx, dy);
+                break;
+            case 2:                                         //InterceptAndChases
+                this.interceptAndChase(dx, dy, dpx, dpy);
+                break;
+            case 3:                                         //Guards and chases
+                this.guardAndChase(dpx, dpy);
+                break;
+        }
+        if (gameframe % 10 === 0) {
             this.frame++;
-            this.frame %= 3;
+            this.frame %= 8;
         }
     }
 
@@ -311,7 +341,17 @@ class Cats{
     }
 
     draw() {
-        this.showHitbox();
+        //this.showHitbox();
+        if (this.x < this.xDestination && this.distanceToDestination > this.radius) {
+            ctx.drawImage(this.catRight, this.frame * this.spriteWidth, 0, this.spriteWidth, this.spriteHeight,
+                this.x - this.spriteWidth / 10, this.y - this.spriteHeight / 10, this.spriteWidth / 5, this.spriteHeight / 5);
+        } else if (this.x > this.xDestination && this.distanceToDestination > this.radius){
+            ctx.drawImage(this.catLeft, this.frame * this.spriteWidth, 0, this.spriteWidth, this.spriteHeight,
+                this.x - this.spriteWidth / 10, this.y - this.spriteHeight / 10, this.spriteWidth / 5, this.spriteHeight / 5);
+        } else if (this.distanceToDestination < this.radius){
+            ctx.drawImage(this.catIdle, this.frame * this.spriteWidth, 0, this.spriteWidth, this.spriteHeight,
+                this.x - this.spriteWidth / 10, this.y - this.spriteHeight / 10, this.spriteWidth / 5, this.spriteHeight / 5);
+        }
     }
 
 }
@@ -460,7 +500,7 @@ class Level{
         for(let i = 0; i < this.catsArray.length; ++i) {
             this.catsArray[i].update();
             this.catsArray[i].draw();
-            if(this.catsArray[i].distance < this.catsArray[i].radius + this.player.radius && this.player.isInvincible === false){
+            if(this.catsArray[i].distanceToPlayer < this.catsArray[i].radius + this.player.radius && this.player.isInvincible === false){
                 this.failed = true;
                 //console.log("Collision " + this.catsArray[i].type + " " + i + " Distance " + this.catsArray[i].distance);
             }
