@@ -612,7 +612,7 @@ class Level{
     }
 }
 
-let currentLoaded = new Level(2, "./assets/cheese1.png");
+let currentLoaded = new Level(0, "./assets/cheese1.png");
 currentLoaded.finished = true;
 let checkpoint = 0;
 
