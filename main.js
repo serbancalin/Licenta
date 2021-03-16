@@ -40,7 +40,6 @@ class Player {
         this.spriteHeight = 155;
         this.spriteWidth = 150;
 
-
         this.playerRight = new Image();
         this.playerRight.src = "./assets/mouseR.png";
         this.playerLeft = new Image();
@@ -48,7 +47,7 @@ class Player {
         this.playerIdle = new Image();
         this.playerIdle.src = "./assets/mouseIdle.png";
 
-        this.isInvincible = true;
+        this.isInvincible = false;
     }
 
     update(){
@@ -291,17 +290,17 @@ class Cats{
     }
 
     interceptAndChase(dx, dy, dpx, dpy){
-        let offset = this.radius;
-        if(this.distanceToDestination < this.distanceToPlayer + offset){
-            this.moveToLocation(dx, dy);
+        let offset = 10;
+        if(this.distanceToDestination + offset < this.distanceToPlayer){
+            this.moveToLocation(dx, dy, this.speed);
             this.xDestination = mouse.x;
             this.yDestination = mouse.y;
-            console.log("Chasing destination");
+            //console.log("Chasing destination");
         } else {
-            this.moveToLocation(dpx, dpy);
+            this.moveToLocation(dpx, dpy, this.speed);
             this.xDestination = this.player.x;
             this.yDestination = this.player.y;
-            console.log("Chasing player");
+            //console.log("Chasing player");
         }
 
     }
@@ -342,13 +341,13 @@ class Cats{
 
     draw() {
         //this.showHitbox();
-        if (this.x < this.xDestination && this.distanceToDestination > this.radius) {
+        if (this.x < this.xDestination - this.radius && this.distanceToDestination > this.radius) {
             ctx.drawImage(this.catRight, this.frame * this.spriteWidth, 0, this.spriteWidth, this.spriteHeight,
                 this.x - this.spriteWidth / 10, this.y - this.spriteHeight / 10, this.spriteWidth / 5, this.spriteHeight / 5);
-        } else if (this.x > this.xDestination && this.distanceToDestination > this.radius){
+        } else if (this.x > this.xDestination + this.radius && this.distanceToDestination > this.radius){
             ctx.drawImage(this.catLeft, this.frame * this.spriteWidth, 0, this.spriteWidth, this.spriteHeight,
                 this.x - this.spriteWidth / 10, this.y - this.spriteHeight / 10, this.spriteWidth / 5, this.spriteHeight / 5);
-        } else if (this.distanceToDestination < this.radius){
+        } else {
             ctx.drawImage(this.catIdle, this.frame * this.spriteWidth, 0, this.spriteWidth, this.spriteHeight,
                 this.x - this.spriteWidth / 10, this.y - this.spriteHeight / 10, this.spriteWidth / 5, this.spriteHeight / 5);
         }
@@ -613,7 +612,7 @@ class Level{
     }
 }
 
-let currentLoaded = new Level(0, "./assets/cheese1.png");
+let currentLoaded = new Level(2, "./assets/cheese1.png");
 currentLoaded.finished = true;
 let checkpoint = 0;
 
