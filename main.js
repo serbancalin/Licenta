@@ -5,6 +5,7 @@ canvas.width = 1000;
 canvas.height = 650;
 
 let gameframe = 0;
+let finalScore = 0;
 let gameOver = false;
 ctx.font = '50px Georgia';
 
@@ -355,6 +356,37 @@ class Cats{
 
 }
 
+class Traps{
+    constructor(x, y, player) {
+        this.x = x;
+        this.y = y;
+        this.player = player;
+        this.radius = 15;
+        this.distance = 0;
+        this.image = new Image()
+        this.image.src = Math.random() > 0.5 ? "./assets/mouseTrap1.png" : "./assets/mouseTrap2.png";
+    }
+    update(){
+        const dx = this.x - this.player.x;
+        const dy = this.y - this.player.y;
+        this.distance = Math.sqrt(dx * dx + dy * dy);
+    }
+
+    showHitbox(){
+        ctx.fillStyle = 'blue';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.closePath();
+        ctx.stroke();
+    }
+
+    draw(){
+        //this.showHitbox();
+        ctx.drawImage(this.image, this.x - this.radius - 15, this.y - this.radius - 15, this.radius * 4, this.radius * 4);
+    }
+}
+
 class Level{
     constructor(current_level, background) {
         this.finished = false;
@@ -373,6 +405,7 @@ class Level{
         this.cheeseArray = [];
         this.wallsArray = [];
         this.catsArray = [];
+        this.trapsArray = [];
         this.initializeCurrentLevel();
     }
 
@@ -467,7 +500,7 @@ class Level{
         this.maxScore = Math.floor(Math.random()  * (maxNumberCheese - minNumberCheese + 1)) + minNumberCheese;
         for(let i = 1; i <= this.maxScore; ++i){
             let x = canvas.width / (this.maxScore + 1) * i + (Math.random() - 0.5) * offset;
-            let y = (Math.random() * (canvas.height - 50)) + 25;
+            let y = (Math.random() * (canvas.height - offset)) + offset / 2;
             this.cheeseArray.push(new Cheese(x, y, this.player));
         }
     }
@@ -573,9 +606,32 @@ class Level{
         mouse.y = canvas.height / 5 * 4;
         this.player = new Player(mouse.x, mouse.y);
         this.catsArray.push(new Cats(canvas.width / 5, canvas.height / 5, this.player, 2));
+        this.createRandomTraps(5, 10);
+    }
+
+    //Traps
+    createRandomTraps(minNumberTraps, maxNumberTraps){
+        const offset = 100;
+        const howMany = Math.floor(Math.random()  * (maxNumberTraps - minNumberTraps + 1)) + minNumberTraps;
+        for(let i = 1; i <= howMany; ++i){
+            let x = canvas.width / (howMany + 1) * i + (Math.random() - 0.5) * offset;
+            let y = (Math.random() * (canvas.height - offset)) + offset / 2;
+            this.trapsArray.push(new Traps(x, y, this.player));
+        }
+    }
+
+    handleTraps(){
+        for(let i = 0; i < this.trapsArray.length; ++i) {
+            this.trapsArray[i].update();
+            this.trapsArray[i].draw();
+            if(this.trapsArray[i].distance < this.trapsArray[i].radius + this.player.radius && this.player.isInvincible === false){
+                this.failed = true;
+            }
+        }
     }
 
     handleLevel3(){
+        this.handleTraps();
         this.handleCats();
         if(this.timesUp === false){
             this.handleTime(10);
@@ -637,10 +693,16 @@ function levelManager() {
                 currentLoaded = level4;
                 break;
             default:
+                if(!finalScore){
+                    finalScore = gameframe;
+                }
                 ctx.fillStyle = 'white';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = 'steelblue';
                 ctx.fillText("YOU WIN", canvas.width / 8 * 3, canvas.height / 2);
+                if(mouse.click){
+                    ctx.fillText(finalScore.toString(), canvas.width / 9 * 4, canvas.height / 2 + 100);
+                }
                 gameOver = true;
                 break;
         }
