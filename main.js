@@ -701,7 +701,7 @@ function levelManager() {
                 ctx.fillStyle = 'steelblue';
                 ctx.fillText("YOU WIN", canvas.width / 8 * 3, canvas.height / 2);
                 if(mouse.click){
-                    ctx.fillText(finalScore.toString(), canvas.width / 9 * 4, canvas.height / 2 + 100);
+                    ctx.fillText(finalScore.toString(), canvas.width / 16 * 7, canvas.height / 2 + 100);
                 }
                 gameOver = true;
                 break;
