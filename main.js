@@ -127,41 +127,47 @@ class Cheese{
 }
 
 class Wall{
-    constructor(x, y, player) {
+    constructor(x, y, player, random_image = 1) {
         this.x = x;
         this.y = y;
         this.player = player;
-        this.radius = 20;
+        this.radius = 25;
         this.distance = 0;
         this.image = new Image()
-        this.loadImage();
+        this.loadImage(random_image);
 
     }
 
-    loadImage(){
-        const which = Math.random();
-        if(which <= 0.25){
-            this.image.src = "./assets/spilledDrink.png";
-            this.xcoordOffset = 60;
-            this.ycoordOffset = 25;
-            this.sizeOffset = 6;
-        } else if (which <= 0.5) {
-            this.image.src = "./assets/salt.png";
-            this.xcoordOffset = 25;
-            this.ycoordOffset = 20;
-            this.sizeOffset = 3.75;
-        } else if (which <= 0.75){
-            this.image.src = "./assets/brokenCup.png";
-            this.xcoordOffset = 25;
-            this.ycoordOffset = 40;
-            this.sizeOffset = 4.5;
+    loadImage(random_image) {
+        if (random_image){
+            const which = Math.random();
+            if (which <= 0.25) {
+                this.image.src = "./assets/spilledDrink.png";
+                this.xcoordOffset = 60;
+                this.ycoordOffset = 25;
+                this.sizeOffset = 6;
+            } else if (which <= 0.5) {
+                this.image.src = "./assets/salt.png";
+                this.xcoordOffset = 25;
+                this.ycoordOffset = 20;
+                this.sizeOffset = 3.75;
+            } else if (which <= 0.75) {
+                this.image.src = "./assets/brokenCup.png";
+                this.xcoordOffset = 25;
+                this.ycoordOffset = 40;
+                this.sizeOffset = 4.5;
+            } else if (which <= 1.0) {
+                this.image.src = "./assets/brokenPlate.png";
+                this.xcoordOffset = 30;
+                this.ycoordOffset = 20;
+                this.sizeOffset = 4.5;
+            }
         } else {
-            this.image.src = "./assets/brokenPlate.png";
-            this.xcoordOffset = 30;
-            this.ycoordOffset = 20;
-            this.sizeOffset = 4.5;
+            this.image.src = "./assets/wall.jpg";
+            this.xcoordOffset = 0;
+            this.ycoordOffset = 0;
+            this.sizeOffset = 1.975;
         }
-
     }
 
     update(){
@@ -181,9 +187,9 @@ class Wall{
     }
 
     draw(){
-        //this.showHitbox();
         ctx.drawImage(this.image, this.x - this.radius - this.xcoordOffset, this.y - this.radius - this.ycoordOffset,
             this.radius * this.sizeOffset, this.radius * this.sizeOffset);
+        //this.showHitbox();
     }
 }
 
@@ -415,6 +421,7 @@ class Level{
             case 2: this.initializeLevel2(); break;
             case 3: this.initializeLevel3(); break;
             case 4: this.initializeLevel4(); break;
+            case 5: this.initializeLevel5(); break;
         }
     }
 
@@ -466,6 +473,7 @@ class Level{
             case 2: this.handleLevel2(); break;
             case 3: this.handleLevel3(); break;
             case 4: this.handleLevel4(); break;
+            case 5: this.handleLevel5(); break;
         }
         this.handlePlayer();
     }
@@ -666,9 +674,85 @@ class Level{
             }
         }
     }
+
+    /////////////////////////////////////////        Level 5         ////////////////////////////////////////////////
+
+    initializeLevel5(){
+        let maze_size = 7;
+        let how_many_per_side = canvas.height / (maze_size * 2 - 1);
+
+        mouse.x = how_many_per_side * 1.5 + 100;
+        mouse.y = how_many_per_side * 1.5;
+        this.player = new Player(mouse.x, mouse.y);
+
+        const cheese_x = canvas.width / 9 * 8;
+        const cheese_y = canvas.height / 2;
+        this.cheeseArray.push(new Cheese(cheese_x, cheese_y, this.player));
+
+
+        this.createMazeWalls(maze_size);
+        this.maxScore = 1;
+    }
+
+    generateMazeKey(n){
+        let string = "0";
+        let length = 2;
+        let begin = 'R';
+        let end = 'L';
+        let step = 1;
+        while(length > 1) {
+            let in_between = "";
+            for(let pos = 0; pos < length - 2; ++pos)
+                in_between += Math.random() > 0.5 ? 'L' : 'R';
+
+            string += begin + in_between + end;
+            if(length === n) {
+                step = -1
+                begin = 'L'
+                end = 'R'
+            }
+            length += step
+        }
+        string += 'R';
+        return string
+    }
+
+    createMazeWalls(maze_size){
+        let key = this.generateMazeKey(maze_size);
+        console.log(key);
+
+        let y_offset = 25;
+        let x_offset = 125;
+        let how_many_per_side = canvas.height / (maze_size * 2 - 1);
+        for(let x = 1 ; x <= maze_size ; ++x){
+            for(let y = 1 ; y <= maze_size ; ++y){
+                let wall_x = ((x - 1) * 2) * how_many_per_side + x_offset;
+                let wall_y = ((y - 1) * 2) * how_many_per_side + y_offset;
+                this.wallsArray.push(new Wall(wall_x, wall_y, this.player, 0));
+
+                let k = Math.min(y, maze_size - x + 1);
+                let key_index = (x * (x - 1) + (x + k - 1) * (x + k) - x * (x + 1) + (y - k) * (2 * maze_size - y + k + 1)) / 2;
+                if(key[key_index] === 'L'){
+                    this.wallsArray.push(new Wall(wall_x, wall_y - how_many_per_side, this.player, 0));
+                }
+                if(key[key_index] === 'R'){
+                    this.wallsArray.push(new Wall(wall_x - how_many_per_side, wall_y, this.player, 0));
+                }
+            }
+        }
+    }
+
+    handleLevel5(){
+        this.handleScore();
+        this.handleWalls();
+        this.handleCheese();
+        if(this.scoreAchieved === true){
+           this.rollCredits();
+        }
+    }
 }
 
-let currentLoaded = new Level(0, "./assets/cheese1.png");
+let currentLoaded = new Level(4, "./assets/kitchen1.jpg");
 currentLoaded.finished = true;
 let checkpoint = 0;
 
@@ -691,6 +775,10 @@ function levelManager() {
             case 3:
                 let level4 = new Level(4, "./assets/kitchen4.jpg");
                 currentLoaded = level4;
+                break;
+            case 4:
+                let level5 = new Level(5, "./assets/floor.jpg");
+                currentLoaded = level5;
                 break;
             default:
                 if(!finalScore){
