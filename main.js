@@ -752,7 +752,7 @@ class Level{
     }
 }
 
-let currentLoaded = new Level(4, "./assets/kitchen1.jpg");
+let currentLoaded = new Level(0, "./assets/kitchen1.jpg");
 currentLoaded.finished = true;
 let checkpoint = 0;
 
